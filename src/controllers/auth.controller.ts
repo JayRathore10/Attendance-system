@@ -1,7 +1,8 @@
 import { Request , Response } from "express";
-import { createUserSchema } from "../validators/user.zod";
+import { createUserSchema, findUserSchema } from "../validators/user.zod";
 import { userModel } from "../models/user.model";
 
+// testing API function
 export const test = (req : Request  , res : Response )=>{
   try{
 
@@ -20,6 +21,7 @@ export const test = (req : Request  , res : Response )=>{
 
 export const signUp = async (req : Request , res : Response )=>{
   try{
+    // validation of  req.body 
     const validateData = createUserSchema.parse(req.body);
 
     const isAlreadyUser = await userModel.findOne({email : req.body.email});
@@ -56,5 +58,41 @@ export const signUp = async (req : Request , res : Response )=>{
       success : false , 
       message : "Server Error" , 
     });
+  }
+}
+
+export const login = async(req : Request  , res : Response)=>{
+  try{
+    // validation of email and password ;
+    const validData = findUserSchema.parse(req.body);
+    
+    const user = await userModel.findOne({email : req.body.email});
+
+    if(!user){
+      return res.status(400).json({
+        success : false , 
+        message : "User is not found"
+      })
+    }
+
+    return res.status(200).json({
+      success : true , 
+      data : `JWT_TOKEN`
+    })
+
+  }catch(err : any){
+    if(err.error === "ZodError"){
+      return res.status(400).json({
+        success : false ,
+        message : "Validation Error" , 
+        errors : err.errors
+      })
+    }
+
+    return res.status(400).json({
+      success : false , 
+      message : "Server Error"
+    })
+
   }
 }

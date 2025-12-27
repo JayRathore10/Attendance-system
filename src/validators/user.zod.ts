@@ -6,3 +6,8 @@ export const createUserSchema = z.object({
   password : z.string().min(6) ,
   role : z.enum(["teacher" , "student"])
 }); 
+
+export const findUserSchema = z.object({
+  email : z.string().email("Invalid Email") ,
+  password : z.string().min(6)
+});
