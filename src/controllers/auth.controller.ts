@@ -2,12 +2,27 @@ import { Request , Response } from "express";
 import { createUserSchema } from "../validators/user.zod";
 import { userModel } from "../models/user.model";
 
+export const test = (req : Request  , res : Response )=>{
+  try{
+
+    const  a = req.body.a;
+
+    return res.status(201).json({
+      a , 
+      sucess : true
+    })
+  }catch(err){
+    return res.status(500).json({
+      success : false 
+    })
+  }
+}
 
 export const signUp = async (req : Request , res : Response )=>{
   try{
     const validateData = createUserSchema.parse(req.body);
 
-    const isAlreadyUser = await userModel.find(req.body.email);
+    const isAlreadyUser = await userModel.findOne({email : req.body.email});
 
     if(isAlreadyUser){
       return res.status(400).json({
