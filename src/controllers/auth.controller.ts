@@ -1,10 +1,11 @@
 import { Request , Response } from "express";
 import { createUserSchema, findUserSchema } from "../validators/user.zod";
 import { userModel } from "../models/user.model";
-import { encryptPassword } from "../utilis/encryptPassword";
+import { encryptPassword } from "../utils/encryptPassword";
 import bcrypt from 'bcrypt';
 import jwt from "jsonwebtoken";
 import cookieParser from "cookie-parser";
+import { authRequest } from "../types/authRequest";
 
 // testing API function
 export const test = (req : Request  , res : Response )=>{
@@ -109,9 +110,26 @@ export const login = async(req : Request  , res : Response)=>{
       })
     }
 
+    const playload = {
+      userId : user._id , 
+      role : user.role
+    }
+
+    const JWT_SECRET = process.env.JWT_SECRET;
+
+    if(!JWT_SECRET){
+      return res.status(400).json({
+        success : false, 
+        message : "JWT_SECRET not define"
+      })
+    }
+
+    const token = jwt.sign(playload, JWT_SECRET);
+    res.cookie("token" , token);
+
     return res.status(200).json({
       success : true , 
-      data : `JWT_TOKEN`
+      data : token
     })
 
   }catch(err : any){
@@ -128,5 +146,34 @@ export const login = async(req : Request  , res : Response)=>{
       message : "Server Error"
     })
 
+  }
+}
+
+export const authMe = async(req : authRequest , res : Response)=>{
+  try{
+    const user = req.user;
+
+    if(!user){
+      return res.status(401).json({
+        success : false , 
+        message : "User Not Found"
+      })
+    }
+
+    return res.status(200).json({
+      success : true, 
+      data : {
+        _id : user._id, 
+        name : user.name , 
+        email : user.email ,
+        role : user.role
+      }
+    })
+
+  }catch(err){
+    return res.json(500).json({
+      success : false , 
+      err
+    })
   }
 }
