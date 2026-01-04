@@ -88,10 +88,10 @@ export const addStudent = async (req: authRequest, res: Response) => {
       })
     }
 
-    if(!validStudentId.success){
+    if (!validStudentId.success) {
       return res.status(400).json({
-        success : false , 
-        error : validStudentId.error.flatten().fieldErrors
+        success: false,
+        error: validStudentId.error.flatten().fieldErrors
       })
     }
 
@@ -164,37 +164,37 @@ export const addStudent = async (req: authRequest, res: Response) => {
 export const getClass = async (req: authRequest, res: Response) => {
   try {
 
-    if(!req.params.id){
+    if (!req.params.id) {
       return res.status(401).json({
-        success : false , 
+        success: false,
       })
     }
 
     const validClassId = validClassIdSchema.safeParse(req.params.id);
 
-    if(!validClassId.success){
+    if (!validClassId.success) {
       return res.status(400).json({
-        success : false , 
+        success: false,
         error: validClassId.error.flatten().fieldErrors
       });
     }
 
     const classData = await classModel.findOne(validClassId);
 
-    if(!classData){
+    if (!classData) {
       return res.status(404).json({
-        success : false , 
-        message : "Class Not Found"
+        success: false,
+        message: "Class Not Found"
       })
     }
 
     return res.status(200).json({
-      success : true, 
-      data : {
-        _id : classData._id , 
-        className : classData.className , 
-        teacherId : classData.teacherId , 
-        studentIds : classData.studentIds 
+      success: true,
+      data: {
+        _id: classData._id,
+        className: classData.className,
+        teacherId: classData.teacherId,
+        studentIds: classData.studentIds
       }
     });
 
@@ -215,7 +215,73 @@ export const getClass = async (req: authRequest, res: Response) => {
   }
 }
 
+export const myAttendance = async (req: authRequest, res: Response) => {
+  try {
 
+    if (!req.params.id) {
+      return res.status(401).json({
+        success: false,
+      })
+    }
+
+    if(req.user?.role !== "student"){
+      return res.status(403).json({
+        success : false, 
+        message  : "Only student can excess"
+      });
+    }
+
+    const studentId = req.user._id;
+    
+    const classId = req.params.id;
+    const classData = await classModel.findById(classId);
+
+    // Array of student Ids 
+    // then find the student id in that array
+    const allPresentStudentsIds = classData?.studentIds;
+
+    if(!allPresentStudentsIds || allPresentStudentsIds.length == 0){
+      return res.status(404).json({
+        success : false , 
+        message : "Not found"
+      })
+    }
+
+    const isStudentPresent = allPresentStudentsIds?.includes( studentId);
+
+    if(!isStudentPresent){
+      return res.status(200).json({
+        success : true , 
+        data : {
+          classId : classId, 
+          status: null
+        }
+      })
+    }
+
+    return res.status(200).json({
+      success : true , 
+      data : {
+        classId : classId , 
+        status : "present"
+      }
+    })
+
+  } catch (err: any) {
+    if (err.error === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors: err.errors
+      })
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Server Error"
+    })
+  }
+}
 
 /**
  * 
