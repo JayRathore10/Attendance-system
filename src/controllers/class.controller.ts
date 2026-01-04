@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { validClassNameSchema, validStudentSchema } from '../validators/class.zod';
-import { authRequest } from "../types/authRequest";
+import { validClassIdSchema, validClassNameSchema, validStudentSchema } from '../validators/class.zod';
+import { authRequest } from '../types/authRequest';
 import { success } from "zod";
 import { classModel } from "../models/class.model";
 import { userModel } from "../models/user.model";
@@ -45,7 +45,7 @@ export const createClass = async (req: authRequest, res: Response) => {
         studentIds: newClass.studentIds
       }
     });
-  } catch (err : any) {
+  } catch (err: any) {
     if (err.error === "ZodError") {
       return res.status(400).json({
         success: false,
@@ -77,16 +77,26 @@ export const addStudent = async (req: authRequest, res: Response) => {
       });
     }
 
-    const validStudentName = validStudentSchema.safeParse(req.body);;
+    const validClassId = validClassIdSchema.safeParse(req.params);
 
-    if (!validStudentName.success) {
+    const validStudentId = validStudentSchema.safeParse(req.body);
+
+    if (!validClassId.success) {
       return res.status(400).json({
         success: false,
-        error: validStudentName.error.flatten().fieldErrors
+        error: validClassId.error.flatten().fieldErrors
       })
     }
 
-    const { classId, studentId } = validStudentName.data;
+    if(!validStudentId.success){
+      return res.status(400).json({
+        success : false , 
+        error : validStudentId.error.flatten().fieldErrors
+      })
+    }
+
+    const classId = validClassId.data;
+    const studentId = validStudentId.data;
 
     const classData = await classModel.findOne({
       _id: classId,
@@ -134,7 +144,7 @@ export const addStudent = async (req: authRequest, res: Response) => {
         studentIds: updateClass.studentIds
       }
     });
-  } catch (err : any) {
+  } catch (err: any) {
     if (err.error === "ZodError") {
       return res.status(400).json({
         success: false,
@@ -150,6 +160,62 @@ export const addStudent = async (req: authRequest, res: Response) => {
 
   }
 }
+
+export const getClass = async (req: authRequest, res: Response) => {
+  try {
+
+    if(!req.params.id){
+      return res.status(401).json({
+        success : false , 
+      })
+    }
+
+    const validClassId = validClassIdSchema.safeParse(req.params.id);
+
+    if(!validClassId.success){
+      return res.status(400).json({
+        success : false , 
+        error: validClassId.error.flatten().fieldErrors
+      });
+    }
+
+    const classData = await classModel.findOne(validClassId);
+
+    if(!classData){
+      return res.status(404).json({
+        success : false , 
+        message : "Class Not Found"
+      })
+    }
+
+    return res.status(200).json({
+      success : true, 
+      data : {
+        _id : classData._id , 
+        className : classData.className , 
+        teacherId : classData.teacherId , 
+        studentIds : classData.studentIds 
+      }
+    });
+
+  } catch (err: any) {
+    if (err.error === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors: err.errors
+      })
+    }
+
+    return res.status(400).json({
+      success: false,
+      message: "Server Error"
+    })
+
+  }
+}
+
+
 
 /**
  * 

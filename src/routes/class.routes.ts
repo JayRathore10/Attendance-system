@@ -6,3 +6,4 @@ export const classRouter = Router();
 
 classRouter.post("/" , authVerfication , createClass );
 classRouter.post("/:id/add-student" , authVerfication , addStudent);
+classRouter,get("/:id" , authVerfication , );
