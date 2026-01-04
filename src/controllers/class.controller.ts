@@ -283,10 +283,3 @@ export const myAttendance = async (req: authRequest, res: Response) => {
   }
 }
 
-/**
- * 
- * Add /class 
- * Add all the class routes and their functionality 
- *
- * 
- */
