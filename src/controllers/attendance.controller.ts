@@ -4,7 +4,6 @@ import { startAttendanceSchema } from "../validators/startAttendance.zod";
 import { classModel } from "../models/class.model";
 
 // Store in memory 
-
 let activeSession: {
   classId: string;
   startedAt: string;
